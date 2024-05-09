@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask
 from routes import movie_blue_print;
 app = Flask(__name__)
 
