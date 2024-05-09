@@ -24,17 +24,25 @@ sample_data = [
 movie_blue_print = Blueprint('movie', __name__)
 
 # Routes for API
+
 @movie_blue_print.route('/movie', methods=['GET'])
 def get_movies():
-    movies = list(movies_collection.find({}, {'_id': 0}))
+    movies = list(movies_collection.find({}))
+    for movie in movies:
+        movie['id'] = str(movie.pop('_id'))
+    print(movies)
     return jsonify(movies)
 
 @movie_blue_print.route('/movie', methods=['POST'])
 def add_movie():
-    new_movie = request.get_json()
-    db_response = movies_collection.insert_one(new_movie)
-    del new_movie['_id']
-    return jsonify({"message": "movie saved successfully", "details": {"id": str(db_response.inserted_id),}}), 201
+    try:
+        new_movie = request.get_json()
+        db_response = movies_collection.insert_one(new_movie)
+        del new_movie['_id']
+        return jsonify({"message": "movie saved successfully", "details": {"id": str(db_response.inserted_id),}}), 201
+    except Exception as ex:
+        print('exception occurred', ex)
+        return jsonify({'error': 'exception occurred'})
 
 
 @movie_blue_print.route('/movie/<id>', methods=['GET'])
@@ -47,12 +55,17 @@ def get_movie(id):
 
 @movie_blue_print.route('/movie/<id>', methods=['PUT'])
 def update_movie(id):
-    updated_movie = request.get_json()
-    result = movies_collection.update_one({'_id': ObjectId(id)}, {'$set': updated_movie})
-    if result.modified_count == 1:
-        return jsonify({'message':'Movie Updated'})
-    else:
-        return jsonify({'error': 'Movie not found'}), 404
+    try:
+        updated_movie = request.get_json()
+        result = movies_collection.update_one({'_id': ObjectId(id)}, {'$set': updated_movie})
+        if result.modified_count == 1:
+            return jsonify({'message':'Movie Updated'})
+        else:
+            return jsonify({'error': 'Movie not found'}), 404
+    except Exception as ex:
+        print('exception occurred', ex)
+        return jsonify({'error': 'exception occurred'})
+    
 
 @movie_blue_print.route('/movie/<id>', methods=['DELETE'])
 def delete_movie(id):
