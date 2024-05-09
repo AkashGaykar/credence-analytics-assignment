@@ -24,7 +24,9 @@ sample_data = [
 movie_blue_print = Blueprint('movie', __name__)
 
 # Routes for API
-
+"""
+Getting list of all movies in database
+"""
 @movie_blue_print.route('/movie', methods=['GET'])
 def get_movies():
     movies = list(movies_collection.find({}))
@@ -33,6 +35,9 @@ def get_movies():
     print(movies)
     return jsonify(movies)
 
+""""
+To create a new movie
+"""
 @movie_blue_print.route('/movie', methods=['POST'])
 def add_movie():
     try:
@@ -44,7 +49,9 @@ def add_movie():
         print('exception occurred', ex)
         return jsonify({'error': 'exception occurred'})
 
-
+"""
+To fetch the single movie details with the help od ID
+"""
 @movie_blue_print.route('/movie/<id>', methods=['GET'])
 def get_movie(id):
     movie = movies_collection.find_one({"_id": ObjectId(id)}, {'_id': 0})
@@ -52,7 +59,10 @@ def get_movie(id):
         return jsonify(movie)
     else:
         return jsonify({'error': 'Movie not found'}), 404
-
+        
+""""
+Update movie details with the help of ID
+"""
 @movie_blue_print.route('/movie/<id>', methods=['PUT'])
 def update_movie(id):
     try:
@@ -66,7 +76,9 @@ def update_movie(id):
         print('exception occurred', ex)
         return jsonify({'error': 'exception occurred'})
     
-
+""""
+To delete particular movie
+"""
 @movie_blue_print.route('/movie/<id>', methods=['DELETE'])
 def delete_movie(id):
     result = movies_collection.delete_one({'_id': ObjectId(id)})
