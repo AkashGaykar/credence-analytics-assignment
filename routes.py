@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify, Blueprint
 from db import movies_collection
 from bson.objectid import ObjectId
-from http import HTTPStatus
+from statusCode import *
+from flask import current_app
 
 
 # Sample data
@@ -28,6 +29,7 @@ movie_blue_print = Blueprint('movie', __name__)
 """
 def create_response(reponse, status_code):
     reponse['status'] = status_code.phrase
+    current_app.logger.debug(reponse)
     return (
         jsonify(reponse),
         status_code
@@ -42,11 +44,11 @@ def get_movies():
         movies = list(movies_collection.find({}))
         for movie in movies:
             movie['id'] = str(movie.pop('_id'))
-        print(movies)
-        return create_response({'movies' : movies}, HTTPStatus.OK)
+        current_app.logger.debug(movies)
+        return create_response({'movies' : movies}, statusCode_200)
     except Exception as ex:
-        print('exception occurred', ex)
-        return create_response({'error': 'exception occurred'}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        current_app.logger.error(ex)
+        return create_response({'error': 'exception occurred'}, Error_500)
 
 """"
 To create a new movie
@@ -57,10 +59,10 @@ def add_movie():
         new_movie = request.get_json()
         db_response = movies_collection.insert_one(new_movie)
         del new_movie['_id']
-        return create_response({"message": "movie saved successfully", "details": {"id": str(db_response.inserted_id),}}, HTTPStatus.CREATED)
+        return create_response({"message": "movie saved successfully", "details": {"id": str(db_response.inserted_id),}}, statusCode_201)
     except Exception as ex:
-        print('exception occurred', ex)
-        return create_response({'error': 'exception occurred'}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        current_app.logger.error(ex)
+        return create_response({'error': 'exception occurred'}, Error_500)
 
 """
 To fetch the single movie details with the help od ID
@@ -70,29 +72,29 @@ def get_movie(id):
     try:
         movie = movies_collection.find_one({"_id": ObjectId(id)}, {'_id': 0})
         if movie:
-            return create_response({'movie': movie}, HTTPStatus.OK)
+            return create_response({'movie': movie}, statusCode_200)
         else:
-            return create_response({'error': 'Movie not found'}, HTTPStatus.NOT_FOUND)
+            return create_response({'error': 'Movie not found'}, Error_404)
     except Exception as ex:
-        print('exception occurred', ex)
-        return create_response({'error': 'exception occurred'}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        current_app.logger.error(ex)
+        return create_response({'error': 'exception occurred'}, Error_500)
         
 """"
 Update movie details with the help of ID
 """
 @movie_blue_print.route('/movie/<id>', methods=['PUT'])
-def update_movie(id): 
+def update_movie(id):
     try:
         updated_movie = request.get_json()
         result = movies_collection.update_one({'_id': ObjectId(id)}, {'$set': updated_movie})
         if result.modified_count == 1:
-            return create_response({'message':'Movie Updated'}, HTTPStatus.OK)
+            return create_response({'message':'Movie Updated'}, statusCode_200)
         else:
-            return create_response({'message':'No Change in movie details'}, HTTPStatus.OK)
+            return create_response({'message':'No Change in movie details'}, statusCode_200)
         
     except Exception as ex:
-        print('exception occurred', ex)
-        return create_response({'error': 'exception occurred'}, HTTPStatus.NOT_FOUND)
+        current_app.logger.error(ex)
+        return create_response({'error': 'exception occurred'}, Error_404)
 
 
 """"
@@ -108,14 +110,14 @@ def update_movie_name(id):
             movie['name'] = movie_name
             result = movies_collection.update_one({'_id': ObjectId(id)}, {'$set': movie})
             if result.modified_count == 1:
-                return create_response({'message':'Movie Name Updated'}, HTTPStatus.OK)
+                return create_response({'message':'Movie Name Updated'}, statusCode_200)
             else:
-                return create_response({'message':'No Change in movie name'}, HTTPStatus.OK)
+                return create_response({'message':'No Change in movie name'}, statusCode_200)
         else:
-            return create_response({'error': 'Movie not found'}, HTTPStatus.NOT_FOUND)
+            return create_response({'error': 'Movie not found'}, Error_404)
     except Exception as ex:
-        print('exception occurred', ex)
-        return create_response({'error': 'exception occurred'}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        current_app.logger.error(ex)
+        return create_response({'error': 'exception occurred'},Error_500)
     
 """"
 To delete particular movie
@@ -125,9 +127,9 @@ def delete_movie(id):
     try:
         result = movies_collection.delete_one({'_id': ObjectId(id)})
         if result.deleted_count == 1:
-            return create_response({'message': 'Movie deleted'}, HTTPStatus.OK)
+            return create_response({'message': 'Movie deleted'}, statusCode_200)
         else:
-            return create_response({'error': 'Movie not found'}, HTTPStatus.NOT_FOUND)
+            return create_response({'error': 'Movie not found'}, Error_404)
     except Exception as ex:
-        print('exception occurred', ex)
-        return create_response({'error': 'exception occurred'}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        current_app.logger.error(ex)
+        return create_response({'error': 'exception occurred'}, Error_500)
